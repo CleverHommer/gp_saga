@@ -62,12 +62,23 @@ class AgentWrapper(LocalAgent):
                 hf_api_url="https://api-inference.huggingface.co/models/"
             )
         elif self.config.model_type == "OpenAIServerModel":
-            API_KEY = os.getenv("OPENAI_API_KEY", None) if "https://api.openai.com" in self.config.api_base else ""
-            if API_KEY is None:
-                raise ValueError("OPENAI_API_KEY environment variable must be set for OpenAIServerModel.")
+            if "api.openai.com" in self.config.api_base:
+                api_key_env = "OPENAI_API_KEY"
+            elif "api.deepseek.com" in self.config.api_base:
+                api_key_env = "DEEPSEEK_API_KEY"
+            else:
+                api_key_env = "LLM_API_KEY"
 
-            if "o3-mini" in self.config.model:
-                # Reasoning models currently do not support temperature control
+            API_KEY = os.getenv(api_key_env)
+            if not API_KEY:
+                raise ValueError(
+                    f"{api_key_env} environment variable must be set for "
+                    f"OpenAIServerModel at {self.config.api_base}."
+                )
+
+            if "o3-mini" in self.config.model or "api.deepseek.com" in self.config.api_base:
+                # Reasoning models do not use temperature control. DeepSeek's
+                # current chat models enable thinking mode by default.
                 model = OpenAIServerModel(
                     model_id=self.config.model,
                     api_base=self.config.api_base,

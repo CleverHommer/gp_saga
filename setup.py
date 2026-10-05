@@ -16,7 +16,7 @@ setup(
         "flask_bcrypt",
         "flask_jwt_extended",
         "authlib",
-        "smolagents"
+        "smolagents[openai]==1.12.0"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

@@ -218,14 +218,19 @@ def generate_x509_certificate(config, public_key, ca_private_key, ca_certificate
 
     
     ip_address = ipaddress.ip_address(config.get("IP", "127.0.0.1"))
+    # X.509 validity timestamps are encoded as UTC. Using a naive local
+    # datetime here makes certificates generated in UTC+ time zones appear to
+    # come from the future. Keep the timestamps explicitly in UTC and allow a
+    # small amount of clock skew between local services.
+    now_utc = datetime.datetime.now(tz=datetime.timezone.utc)
     cert = (
         x509.CertificateBuilder()
         .subject_name(subject)
         .issuer_name(ca_certificate.subject)  # CA is the issuer
         .public_key(public_key)
         .serial_number(x509.random_serial_number())
-        .not_valid_before(datetime.datetime.now())
-        .not_valid_after(datetime.datetime.now() + datetime.timedelta(days=365))
+        .not_valid_before(now_utc - datetime.timedelta(minutes=1))
+        .not_valid_after(now_utc + datetime.timedelta(days=365))
         .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)  # Not a CA certificate
         .add_extension(
             x509.SubjectAlternativeName([

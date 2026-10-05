@@ -178,3 +178,6 @@ cython_debug/
 
 .vscode/*
 saga/user/*/*.json
+
+# Local-only remote deployment config
+/config.remote.yaml
